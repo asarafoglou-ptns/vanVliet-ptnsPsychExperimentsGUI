@@ -10,12 +10,14 @@ RunningExperiment = False
 trial_info = []
 
 def RunVST():
-    # Here we first want to handle the explanation screen, wait for user input
-    # (for this, input() works, because we will just instruct the participant to press enter to
-    # continue) and then set a flag that the experiment is currently running for the keypress
-    # handler to use and respond to
+    '''
+    Internal function called on when starting the VST experiment
+    In its curent version, all it does is set some global variables to be used by other functions
 
-    # For now though, just set a flag, mostly
+    The current plan for it is to make it also provide instructions to the participant and
+    resize the window (probably to fullscreen)
+    '''
+    
     trials = int(NumEntry.get())
     global trial_info
     trial_info = TrialOrder(trials, 10, 10, 50, [4,10,20])
@@ -25,6 +27,15 @@ def RunVST():
 
 
 def GoToConfigCreation():
+    '''
+    This function can be called by any button that is meant to lead the user to the configuration
+    screen (also referred to as Settings) for an experiment. It removes the current active widgets
+    and places those needed for the configuration, with pre-existing values based on a preset
+    or matching the changes already made. It will also contain buttons to continue or go back.
+
+    In its current state, the only available option is the number of trials and the only
+    available button is to start the experiment.
+    '''
     # First clear the current screen
     for widget in frame.winfo_children():
         widget.pack_forget()
@@ -52,7 +63,9 @@ def GoToConfigCreation():
     # tk.filedialog.askdirectory() for determining where to save things
     # There's more fields and buttons, those need to be added
 
-
+'''
+These, and other loose declarations, need to become part of a function such as InitialiseGUI(), to define later
+'''
 window = tk.Tk()
 frame = tk.Frame()
 frame.pack()
@@ -79,6 +92,12 @@ t2 = 0
 counter = 0
 
 def ExperimentPress(event):
+    '''
+    Function for internal use. This determines how to handle keypresses, whether that's by closing the program (esc)
+    or timing the response and showing the next stimulus (j or n).
+    This will be expanded on, but it essentially provides a way to close the program and a way to run the actual experiment.
+    Currently prints responses and timings, rather than saving them.
+    '''
     print(event.keysym)
     global counter
     if event.keysym == "Escape":
@@ -105,26 +124,24 @@ def ExperimentPress(event):
             counter = counter + 1
 
 
-# A similar function would go to the current settings screen, and then finally there's a function
-# that goes to the experiment
-
-
-# For this function, trialnum refers to the number of trials in the whole experiment
-# ColPopOutPercent refers to the % of trials that are a colour popout,
-# Same for ShapePopOutPercent and shape popouts.
-# TargetPercent refers to how often a target must be present
-# StimulusNums refers to the amount of different trial types for the number of stimuli
-# This expects a vector such as (4, 10, 20)
-# It should return something with a condition, target 1/0, and stimulusnum for each trial
 
 
 def TrialOrder(trialnum, ColPopOutPercent, ShapePopOutPercent, TargetPercent, StimulusNums):
-    # For the sake of testing and having something that at least works, this function will
-    # not use balanced randomisation in its first version.
-    # If balanced randomisation is later implemented, it will likely use nbag randomisation
-    # This involves generating trials in batches containing each possible trial type with the
-    # respective weights as number of times a condition is present and then using
-    # random.shuffle() to make these appear in a random order
+    '''
+    Function mainly intended for internal use, but can be used on its own.
+    This generates randomised trials based on the provided information.
+
+    trialnum: int, number of trials wanted
+    ColPopOutPercent: int, percentage of trials that should be a colour pop-out condition, i.e. 20 for 20%
+    ShapePopOutPercent: int, percentage of trials that should be a shape pop-out condition, i.e. 20 for 20%
+    TargetPercent: int, percentage of trials that should include a target, i.e. 50 for 50%
+    StimulusNums: vector of ints, i.e. [4, 10, 20], determines how many stimuli could be present in a trial, equal weighting assumed
+
+    Currently the function does not perform balanced randomisation, this may be changed to n-bag randomisation later.
+
+    Returns: dict with trial_num (int), trial_type (str from Conjunction, ColPopOut, ShapePopOut),
+    stimuli_num (int from provided vector in StimulusNums), target (int, 0 or 1)
+    '''
 
     # Initialise an empty list, and determine % conjunction based on the other percentages
     trials_info = []
@@ -163,6 +180,16 @@ def TrialOrder(trialnum, ColPopOutPercent, ShapePopOutPercent, TargetPercent, St
 # Also note: when implementing this in the GUI, it might not be with matplotlib
 # Or it will be converting matplotlib into an image or something else along those lines
 def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
+    '''
+    Takes a condition, whether a target is present, and the stimulusnum to generate an image of randomly placed non-overlapping
+    x's and o's.
+
+    condition: str, ColPopOut, ShapePopOut, or Conjunction
+    target: int, 1 for present, 0 for absent
+    stimulusnum: int, must be higher than 4
+
+    Returns: image object
+    '''
     coordspace = [(x, y) for x in range(100) for y in range(100)]
     coordslist = random.sample(coordspace, k = stimulusnum)
     if target == 1:
