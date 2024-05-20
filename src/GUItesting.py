@@ -17,11 +17,12 @@ def RunVST():
     The current plan for it is to make it also provide instructions to the participant and
     resize the window (probably to fullscreen)
     '''
-    
+    # Use TrialOrder to globally prepare randomised trials
     trials = int(NumEntry.get())
     global trial_info
     trial_info = TrialOrder(trials, 10, 10, 50, [4,10,20])
-
+    
+    # Set a flag that the VST experiment is running
     global RunningExperiment
     RunningExperiment = "VST"
 
@@ -36,7 +37,8 @@ def GoToConfigCreation():
     In its current state, the only available option is the number of trials and the only
     available button is to start the experiment.
     '''
-    # First clear the current screen
+    # First clear the current screen, using forget() rather than destroy so the information
+    # in the fillable fields stays accessible
     for widget in frame.winfo_children():
         widget.pack_forget()
     
@@ -99,28 +101,42 @@ def ExperimentPress(event):
     Currently prints responses and timings, rather than saving them.
     '''
     print(event.keysym)
+
+    # global counter is used to determine where in the experiment you are, and if it should end
     global counter
+
+    # esc should always be possible to use to exit the program
     if event.keysym == "Escape":
         window.destroy()
         exit()
+
+    # condition to determine whether to continue
     elif counter > 20:
         window.destroy()
         exit()
+
+    # this is where the experiment actions are performed
     elif RunningExperiment == "VST":
         if event.keysym == "j" or event.keysym == "n":
             global t2
             global t
 
+            # t2 determines how long it's been since the previous stimulus was shown
             t2 = time.time() - t
             print(t2)
+
+            # generate and place image
             img = GenerateStimulus()
             test = ImageTk.PhotoImage(img)
             StimulusImage = tk.Label(image = test)
             StimulusImage.image = test
             StimulusImage.place(x=0, y=0)
 
+            # adjust t to start timing for the next response 
             t = time.time()
             print(t)
+
+            # increment
             counter = counter + 1
 
 
@@ -190,15 +206,22 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
 
     Returns: image object
     '''
+
+    # this generates a space for stimuli to be placed (possibly move this to a different initialiser
+    # to see if that improves running time) 
     coordspace = [(x, y) for x in range(100) for y in range(100)]
+    # from this, take a random sample (this does not repeat, so overlap does not happen)
     coordslist = random.sample(coordspace, k = stimulusnum)
+
+    # only if there is a target, take out one from the list for the target
     if target == 1:
         targetcoords = coordslist[0]
         coordslist = coordslist[1:]
 
-
     plt.figure(figsize = (10,10))
     plt.axis([-5, 105, -5, 105])
+
+    # subset coordinates for ColPopOut distractors
     if condition == "ColPopOut":
         BlackO = coordslist[:len(coordslist)//2]
         BlackOx, BlackOy = zip(*BlackO)
@@ -207,6 +230,7 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
         BlackXx, BlackXy = zip(*BlackX)
         plt.plot(BlackXx, BlackXy, "kx")
 
+    # subset coordinates for ShapePopOut distractors
     elif condition == "ShapePopOut":
         BlackO = coordslist[:len(coordslist)//2]
         BlackOx, BlackOy = zip(*BlackO)
@@ -215,6 +239,7 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
         RedOx, RedOy = zip(*RedO)
         plt.plot(RedOx, RedOy, "ro")
 
+    # subset coordinates for conjunction distractors
     elif condition == "Conjunction":
         BlackO = coordslist[:len(coordslist)//3]
         BlackOx, BlackOy = zip(*BlackO)
@@ -233,6 +258,8 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
     if target == 1:
         plt.plot(targetcoords[0], targetcoords[1], "rx")
     plt.style.use('_mpl-gallery-nogrid')
+
+    # convert to fig object, and then to img object
     fig = plt.gcf()
     buf = io.BytesIO()
     fig.savefig(buf)
@@ -240,7 +267,6 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
     img = Image.open(buf)
     plt.close(fig)
     return img
-
 
 window.bind("<KeyPress>", ExperimentPress)
 window.mainloop()
