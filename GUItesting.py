@@ -76,10 +76,15 @@ NumEntry.insert(0, 20)
 
 t = 0
 t2 = 0
+counter = 0
 
 def ExperimentPress(event):
     print(event.keysym)
+    global counter
     if event.keysym == "Escape":
+        window.destroy()
+        exit()
+    elif counter > 20:
         window.destroy()
         exit()
     elif RunningExperiment == "VST":
@@ -97,6 +102,7 @@ def ExperimentPress(event):
 
             t = time.time()
             print(t)
+            counter = counter + 1
 
 
 # A similar function would go to the current settings screen, and then finally there's a function
