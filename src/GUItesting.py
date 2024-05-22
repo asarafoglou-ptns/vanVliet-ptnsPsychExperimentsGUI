@@ -26,6 +26,26 @@ def RunVST():
     global RunningExperiment
     RunningExperiment = "VST"
 
+root = tk.Tk()
+frame1 = tk.Frame()
+frame2 = tk.Frame()
+frame1.pack(side = tk.LEFT)
+frame2.pack(side = tk.RIGHT)
+
+test1 = tk.Label(master = frame1,
+                 text = "should be left")
+test3 = tk.Label(master = frame1,
+                 text = "should be under and left")
+test2 = tk.Entry(master = frame2)
+test2.insert(0,"top")
+test4 = tk.Entry(master = frame2)
+test4.insert(0,"bottom")
+
+test1.pack()
+test2.pack()
+test3.pack()
+test4.pack()
+
 
 def GoToConfigCreation():
     '''
@@ -48,14 +68,25 @@ def GoToConfigCreation():
     StandardText.pack()
     TrialNum = tk.Label(master = frame,
                         text = "Number of trials:")
+                        #\n Block size: \n Percentage Colour Pop-Out: \n Percentage Shape Pop-Out: \n Target Percent: \n Possible Stimulus Amounts:")
+    BlockNum = tk.Label(master = frame,
+                        text = "Block size:")
+
     #NumEntry = tk.Entry(master = frame)
     # This inserts a value for the entry, necessary for presets
     #NumEntry.insert(0, 20)
     # Without specifying, they will simply go to the top. But if you specify LEFT and RIGHT they will sit next to each other
     TrialNum.pack(side = tk.LEFT)
-    NumEntry.pack(side = tk.RIGHT)
+    NumEntry.pack()
+    BlockNum.pack()
+    BlockEntry.pack()
+    ColPopOutEntry.pack()
+    ShapePopOutEntry.pack()
+    TargetEntry.pack()
+    StimAmountEntry.pack()
 
-    StartExperiment = tk.Button(master = frame,
+    frame2.pack()
+    StartExperiment = tk.Button(master = frame2,
                                 text = "Start Experiment",
                                 width = 25,
                                 height = 5,
@@ -70,6 +101,7 @@ These, and other loose declarations, need to become part of a function such as I
 '''
 window = tk.Tk()
 frame = tk.Frame()
+frame2 = tk.Frame()
 frame.pack()
 openingtext = tk.Label(master = frame,
                        text = "Welcome to the Psychology Experiment GUI \n Please start by selecting an experiment from the following",
@@ -88,6 +120,21 @@ exp1button.pack()
 
 NumEntry = tk.Entry(master = frame)
 NumEntry.insert(0, 20)
+
+BlockEntry = tk.Entry(master = frame)
+BlockEntry.insert(0,5)
+
+ColPopOutEntry = tk.Entry(master = frame)
+ColPopOutEntry.insert(0,20)
+
+ShapePopOutEntry = tk.Entry(master = frame)
+ShapePopOutEntry.insert(0,20)
+
+TargetEntry = tk.Entry(master = frame)
+TargetEntry.insert(0,50)
+
+StimAmountEntry = tk.Entry(master = frame)
+StimAmountEntry.insert(0, "[4, 10, 20]")
 
 t = 0
 t2 = 0
@@ -218,7 +265,7 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
         targetcoords = coordslist[0]
         coordslist = coordslist[1:]
 
-    plt.figure(figsize = (10,10))
+    plt.figure(figsize = (5,5))
     plt.axis([-5, 105, -5, 105])
 
     # subset coordinates for ColPopOut distractors
