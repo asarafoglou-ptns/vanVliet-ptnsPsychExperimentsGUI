@@ -1,2 +1,4 @@
 # vanVliet-ptnsPsychExperimentsGUI
 Package for Python to run (hopefully at least two different types of) psychological experiments from a GUI
+
+NOTE: in its current state, none of the functions are meant to be called by the user. The package is in a demo state, to see what the code can do run the GUItesting.py script. From here, note that pressing escape will close the program. Clicking on Visual Search Task, and then Start Experiment, will start the experiment. Press 'j' or 'n' to see the first stimulus, window needs to be manually resized to see the images. In the terminal, you can see that whenever you press a button it prints what you pressed, and when you press j or n it prints the absolute time as well as the time since the image was generated. After 20 times pressing j or n, the program closes.
