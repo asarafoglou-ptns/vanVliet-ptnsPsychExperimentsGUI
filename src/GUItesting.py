@@ -1,13 +1,212 @@
 import tkinter as tk
+from tkinter import filedialog
 import random
 import matplotlib.pyplot as plt
 import time
 from PIL import Image, ImageTk
 import io
 
+def InitVars():
+    global RunningExperiment
+    RunningExperiment = False
 
-RunningExperiment = False
-trial_info = []
+    global trial_info
+    trial_info = []
+
+    global t
+    global t2
+    global counter
+    t = 0
+    t2 = 0
+    counter = 0
+
+    global settings
+    settings = ["Total trials:", "Block size:", "Percentage colour pop-out:",
+                "Percentage shape pop-out:", "Percentage target present:",
+                "Possible stimulus amounts:", "Seed (optional):"]
+    
+    global config
+    config = {
+        "Experiment Type": "VST",
+        "Total Trials": 200,
+        "Block size": 20,
+        "ColPopOutPercent": 10,
+        "ShapePopOutPercent": 10,
+        "TargetPercent": 50,
+        "Possible Stimulus Amounts": "[4, 10, 20]",
+        "Seed": None,
+        "Study ID": "test_run",
+        "Participant ID": "001",
+        "SaveFilePath": 'C:/Documents/Research/VST_test'
+    }
+
+InitVars()
+
+
+def InitGUI():
+
+    #InitVars()
+
+    global root
+    root = tk.Tk()
+    global frame
+    frame = tk.Frame()
+    frame.pack()
+    openingtext = tk.Label(master = frame,
+                           text = "Welcome to the Psychology Experiment GUI \n Please start by selecting an experiment from the following",
+                           width = "50",
+                           height = "5")
+    openingtext.pack()
+
+    exp1button = tk.Button(master = frame,
+        text = "Visual Search Task",
+        width = 25,
+        height = 5,
+        bg = "white",
+        command = GoToConfigCreation
+    )
+    exp1button.pack()
+
+
+    root.bind("<KeyPress>", ExperimentPress)
+    root.mainloop()
+
+
+
+
+def InitSettings():
+    topframe = tk.Frame(master = frame)
+    topframe.pack()
+
+    MiddleFrame = tk.Frame(master = frame)
+    MiddleFrame.pack()
+    frame1 = tk.Frame(master = MiddleFrame)
+    frame2 = tk.Frame(master = MiddleFrame)
+    frame1.pack(side = tk.LEFT)
+    frame2.pack(side = tk.RIGHT)
+
+    
+
+    StandardText = tk.Label(master = topframe,
+                            text = "Selected Experiment: Visual Search Task \n Settings:")
+    StandardText.pack()
+
+    TrialLabel = tk.Label(master = frame1, text = settings[0])
+
+    global TrialEntry
+    TrialEntry = tk.Entry(master = frame2)
+    TrialEntry.insert(0, config['Total Trials'])
+
+    BlockLabel = tk.Label(master = frame1, text = settings[1])
+
+    global BlockEntry
+    BlockEntry = tk.Entry(master = frame2)
+    BlockEntry.insert(0, config['Block size'])
+
+    ColPopLabel = tk.Label(master = frame1, text = settings[2])
+
+    global ColPopEntry
+    ColPopEntry = tk.Entry(master = frame2)
+    ColPopEntry.insert(0, config['ColPopOutPercent'])
+
+    ShapePopLabel = tk.Label(master = frame1, text = settings[3])
+
+    global ShapePopEntry
+    ShapePopEntry = tk.Entry(master = frame2)
+    ShapePopEntry.insert(0, config['ShapePopOutPercent'])
+
+    TargetLabel = tk.Label(master = frame1, text = settings[4])
+
+    global TargetEntry
+    TargetEntry = tk.Entry(master = frame2)
+    TargetEntry.insert(0, config['TargetPercent'])
+
+    StimLabel = tk.Label(master = frame1, text = settings[5])
+
+    global StimEntry
+    StimEntry = tk.Entry(master = frame2)
+    StimEntry.insert(0, config['Possible Stimulus Amounts'])
+
+    SeedLabel = tk.Label(master = frame1, text = settings[6])
+    global SeedEntry
+    SeedEntry = tk.Entry(master = frame2)
+
+    if config["Seed"] != None:
+        SeedEntry.insert(0, config["Seed"])
+
+    # Also: a section for other experiment settings that are required, those being study ID,
+    # participant ID, and filepath
+
+    #tk.filedialog.askdirectory()
+
+    for widget in frame1.winfo_children():
+        widget.pack()
+
+    for widget in frame2.winfo_children():
+        widget.pack()
+
+    StudyFrame = tk.Frame(master = frame)
+    StudyFrame.pack()
+
+    StudyLabel = tk.Label(master = StudyFrame, text = "Required study information: \n")
+    StudyLabel.pack()
+
+    StudyLabels = tk.Frame(master = StudyFrame)
+    StudyEntries = tk.Frame(master = StudyFrame)
+
+    StudyLabels.pack(side = tk.LEFT)
+    StudyEntries.pack(side = tk.RIGHT)
+
+    StudyID = tk.Label(master = StudyLabels, text = "Study ID:")
+    StudyID.pack()
+
+    global StudyIDEntry
+    StudyIDEntry = tk.Entry(master = StudyEntries)
+    StudyIDEntry.insert(0, config['Study ID'])
+    StudyIDEntry.pack()
+
+    ParticipantID = tk.Label(master = StudyLabels, text = "Participant ID:")
+    ParticipantID.pack()
+
+    global ParticipantIDEntry
+    ParticipantIDEntry = tk.Entry(master = StudyEntries)
+    ParticipantIDEntry.insert(0, config['Participant ID'])
+    ParticipantIDEntry.pack()
+
+    FileLabel = tk.Label(master = StudyLabels, text = "Choose where to save the results:")
+    FileLabel.pack()
+
+    global FileEntry
+    FileEntry = tk.Entry(master = StudyEntries, width = 30)
+    FileEntry.insert(0, config['SaveFilePath'])
+    FileEntry.pack(side = tk.LEFT)
+
+    FileButton = tk.Button(master = StudyEntries, text = "...", command = GetDirectory)
+    FileButton.pack(side = tk.RIGHT)
+
+    #FileEntry = filedialog.askdirectory(master = StudyEntries)
+    #FileEntry.pack()
+
+
+    bottomframe = tk.Frame(master = frame)
+    bottomframe.pack()
+
+    StartExperiment = tk.Button(master = bottomframe,
+                                text = "Start Experiment",
+                                width = 25,
+                                height = 5,
+                                bg = "white",
+                                command = RunVST)
+    StartExperiment.pack(side = tk.RIGHT)
+
+def GetDirectory():
+    global FileEntry
+    filepath = filedialog.askdirectory()
+    
+    if len(filepath) > 0:
+        FileEntry.delete(0, 'end')
+    FileEntry.insert(0, filepath)
+
 
 def RunVST():
     '''
@@ -17,34 +216,37 @@ def RunVST():
     The current plan for it is to make it also provide instructions to the participant and
     resize the window (probably to fullscreen)
     '''
-    # Use TrialOrder to globally prepare randomised trials
-    trials = int(NumEntry.get())
-    global trial_info
-    trial_info = TrialOrder(trials, 10, 10, 50, [4,10,20])
+
+    global config
+    config["Total Trials"] = int(TrialEntry.get())
+    config["Block size"] = int(BlockEntry.get())
+    config["ColPopOutPercent"] = int(ColPopEntry.get())
+    config["ShapePopOutPercent"] = int(ShapePopEntry.get())
+    config["TargetPercent"] = int(TargetEntry.get())
+    config["Possible Stimulus Amounts"] = StimEntry.get()
+    if len(SeedEntry.get()) > 0:
+        config["Seed"] = int(SeedEntry.get())
+    config["Study ID"] = StudyIDEntry.get()
+    config["Participant ID"] = ParticipantIDEntry.get()
+    config["SaveFilePath"] = FileEntry.get()
+
+    global randomised_trials
+    randomised_trials = TrialOrder(config["Total Trials"],
+                                   config["ColPopOutPercent"],
+                                   config["ShapePopOutPercent"],
+                                   config["TargetPercent"],
+                                   config["Possible Stimulus Amounts"],
+                                   config["Seed"])
+    
+    # Clear out widgets, honestly maybe even by just destroying the window entirely for good measure
+    # Then creating a new one that gets set to fullscreen with instructions and no close button
+
+    # Use input() and prompt the user to press enter to continue
     
     # Set a flag that the VST experiment is running
     global RunningExperiment
     RunningExperiment = "VST"
 
-root = tk.Tk()
-frame1 = tk.Frame()
-frame2 = tk.Frame()
-frame1.pack(side = tk.LEFT)
-frame2.pack(side = tk.RIGHT)
-
-test1 = tk.Label(master = frame1,
-                 text = "should be left")
-test3 = tk.Label(master = frame1,
-                 text = "should be under and left")
-test2 = tk.Entry(master = frame2)
-test2.insert(0,"top")
-test4 = tk.Entry(master = frame2)
-test4.insert(0,"bottom")
-
-test1.pack()
-test2.pack()
-test3.pack()
-test4.pack()
 
 
 def GoToConfigCreation():
@@ -57,88 +259,17 @@ def GoToConfigCreation():
     In its current state, the only available option is the number of trials and the only
     available button is to start the experiment.
     '''
-    # First clear the current screen, using forget() rather than destroy so the information
-    # in the fillable fields stays accessible
+
+    # First clear the current screen
     for widget in frame.winfo_children():
-        widget.pack_forget()
-    
-    # Then start creating the configcreation screen
-    StandardText = tk.Label(master = frame,
-                            text = "Selected Experiment: Visual Search Task \n Settings:")
-    StandardText.pack()
-    TrialNum = tk.Label(master = frame,
-                        text = "Number of trials:")
-                        #\n Block size: \n Percentage Colour Pop-Out: \n Percentage Shape Pop-Out: \n Target Percent: \n Possible Stimulus Amounts:")
-    BlockNum = tk.Label(master = frame,
-                        text = "Block size:")
+        widget.destroy()
 
-    #NumEntry = tk.Entry(master = frame)
-    # This inserts a value for the entry, necessary for presets
-    #NumEntry.insert(0, 20)
-    # Without specifying, they will simply go to the top. But if you specify LEFT and RIGHT they will sit next to each other
-    TrialNum.pack(side = tk.LEFT)
-    NumEntry.pack()
-    BlockNum.pack()
-    BlockEntry.pack()
-    ColPopOutEntry.pack()
-    ShapePopOutEntry.pack()
-    TargetEntry.pack()
-    StimAmountEntry.pack()
+    # Then use the init to load the wanted screen
+    InitSettings()
 
-    frame2.pack()
-    StartExperiment = tk.Button(master = frame2,
-                                text = "Start Experiment",
-                                width = 25,
-                                height = 5,
-                                bg = "white",
-                                command = RunVST)
-    StartExperiment.pack(side = tk.RIGHT)
-    # tk.filedialog.askdirectory() for determining where to save things
-    # There's more fields and buttons, those need to be added
 
-'''
-These, and other loose declarations, need to become part of a function such as InitialiseGUI(), to define later
-'''
-window = tk.Tk()
-frame = tk.Frame()
-frame2 = tk.Frame()
-frame.pack()
-openingtext = tk.Label(master = frame,
-                       text = "Welcome to the Psychology Experiment GUI \n Please start by selecting an experiment from the following",
-                       width = "50",
-                       height = "5")
-openingtext.pack()
 
-exp1button = tk.Button(master = frame,
-    text = "Visual Search Task",
-    width = 25,
-    height = 5,
-    bg = "white",
-    command = GoToConfigCreation
-)
-exp1button.pack()
 
-NumEntry = tk.Entry(master = frame)
-NumEntry.insert(0, 20)
-
-BlockEntry = tk.Entry(master = frame)
-BlockEntry.insert(0,5)
-
-ColPopOutEntry = tk.Entry(master = frame)
-ColPopOutEntry.insert(0,20)
-
-ShapePopOutEntry = tk.Entry(master = frame)
-ShapePopOutEntry.insert(0,20)
-
-TargetEntry = tk.Entry(master = frame)
-TargetEntry.insert(0,50)
-
-StimAmountEntry = tk.Entry(master = frame)
-StimAmountEntry.insert(0, "[4, 10, 20]")
-
-t = 0
-t2 = 0
-counter = 0
 
 def ExperimentPress(event):
     '''
@@ -151,15 +282,14 @@ def ExperimentPress(event):
 
     # global counter is used to determine where in the experiment you are, and if it should end
     global counter
-
     # esc should always be possible to use to exit the program
     if event.keysym == "Escape":
-        window.destroy()
+        root.destroy()
         exit()
 
     # condition to determine whether to continue
     elif counter > 20:
-        window.destroy()
+        root.destroy()
         exit()
 
     # this is where the experiment actions are performed
@@ -189,7 +319,7 @@ def ExperimentPress(event):
 
 
 
-def TrialOrder(trialnum, ColPopOutPercent, ShapePopOutPercent, TargetPercent, StimulusNums):
+def TrialOrder(trialnum, ColPopOutPercent, ShapePopOutPercent, TargetPercent, StimulusNums, Seed):
     '''
     Function mainly intended for internal use, but can be used on its own.
     This generates randomised trials based on the provided information.
@@ -199,6 +329,7 @@ def TrialOrder(trialnum, ColPopOutPercent, ShapePopOutPercent, TargetPercent, St
     ShapePopOutPercent: int, percentage of trials that should be a shape pop-out condition, i.e. 20 for 20%
     TargetPercent: int, percentage of trials that should include a target, i.e. 50 for 50%
     StimulusNums: vector of ints, i.e. [4, 10, 20], determines how many stimuli could be present in a trial, equal weighting assumed
+    Seed: int, used as a seed for the random order of trials. Only use for replicability
 
     Currently the function does not perform balanced randomisation, this may be changed to n-bag randomisation later.
 
@@ -206,6 +337,8 @@ def TrialOrder(trialnum, ColPopOutPercent, ShapePopOutPercent, TargetPercent, St
     stimuli_num (int from provided vector in StimulusNums), target (int, 0 or 1)
     '''
 
+    if Seed != None:
+        random.seed(Seed)
     # Initialise an empty list, and determine % conjunction based on the other percentages
     trials_info = []
     ConjPercent = 100 - ColPopOutPercent - ShapePopOutPercent
@@ -224,7 +357,9 @@ def TrialOrder(trialnum, ColPopOutPercent, ShapePopOutPercent, TargetPercent, St
             "trial_num": i,
             "trial_type": condition,
             "stimuli_num": stimuli_num,
-            "target": target
+            "target": target,
+            "reaction_time": None,
+            "response": None
         }
         trials_info.append(current_trial)
 
@@ -315,9 +450,8 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
     plt.close(fig)
     return img
 
-window.bind("<KeyPress>", ExperimentPress)
-window.mainloop()
 
+InitGUI()
 
 # As for other functions needed:
 
