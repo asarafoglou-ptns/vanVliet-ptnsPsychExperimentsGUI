@@ -52,6 +52,15 @@ def InitGUI():
     global frame
     frame = tk.Frame()
     frame.pack()
+    
+    WelcomeScreen()
+
+    root.bind("<KeyPress>", ExperimentPress)
+    root.mainloop()
+
+def WelcomeScreen():
+    for widget in frame.winfo_children():
+        widget.destroy()
     openingtext = tk.Label(master = frame,
                            text = "Welcome to the Psychology Experiment GUI \n Please start by selecting an experiment from the following",
                            width = "50",
@@ -67,12 +76,17 @@ def InitGUI():
     )
     exp1button.pack()
 
+    exp2button = tk.Button(master = frame,
+                           text = "Wisconsin Card Sorting Task\n(Not Implemented)",
+                           width = 25,
+                           height = 5,
+                           bg = "white",
+                           command = GoToWCSTConfig)
+    exp2button.pack()
 
-    root.bind("<KeyPress>", ExperimentPress)
-    root.mainloop()
 
-
-
+def GoToWCSTConfig():
+    NotImplemented
 
 def InitSettings():
     topframe = tk.Frame(master = frame)
@@ -191,8 +205,16 @@ def InitSettings():
     bottomframe = tk.Frame(master = frame)
     bottomframe.pack()
 
+    ReturnButton = tk.Button(master = bottomframe,
+                             text = "Back",
+                             width = 25,
+                             height = 5,
+                             bg = "white",
+                             command = WelcomeScreen)
+    ReturnButton.pack(side = tk.LEFT)
+
     StartExperiment = tk.Button(master = bottomframe,
-                                text = "Start Experiment",
+                                text = "Continue",
                                 width = 25,
                                 height = 5,
                                 bg = "white",
