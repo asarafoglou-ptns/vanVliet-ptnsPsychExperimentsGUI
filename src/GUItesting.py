@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import time
 from PIL import Image, ImageTk
 import io
+import json
 
 def InitVars():
 
@@ -240,6 +241,19 @@ def InitSettings():
                              command = WelcomeScreen)
     ReturnButton.pack(side = tk.LEFT)
 
+    # Save the config
+    SaveConfigButton = tk.Button(master = bottomframe,
+                                 text = "Save config",
+                                 bg = "white",
+                                 command = SaveConfig)
+    SaveConfigButton.pack(side = tk.RIGHT)
+
+    OpenConfigButton = tk.Button(master = bottomframe,
+                                 text = "Open config",
+                                 bg = "white",
+                                 command = OpenConfig)
+    OpenConfigButton.pack(side = tk.RIGHT)
+
     # Linked to a command to start the experiment
     StartExperiment = tk.Button(master = bottomframe,
                                 text = "Continue",
@@ -271,19 +285,8 @@ def RunVST():
     resize the window (probably to fullscreen)
     '''
 
-    # calls on the global config variable and adjusts it to match the entry boxes
-    global config
-    config["Total Trials"] = int(TrialEntry.get())
-    config["Block size"] = int(BlockEntry.get())
-    config["ColPopOutPercent"] = int(ColPopEntry.get())
-    config["ShapePopOutPercent"] = int(ShapePopEntry.get())
-    config["TargetPercent"] = int(TargetEntry.get())
-    config["Possible Stimulus Amounts"] = StimEntry.get()
-    if len(SeedEntry.get()) > 0:
-        config["Seed"] = int(SeedEntry.get())
-    config["Study ID"] = StudyIDEntry.get()
-    config["Participant ID"] = ParticipantIDEntry.get()
-    config["SaveFilePath"] = FileEntry.get()
+    # Updates the config to match the entry boxes
+    UpdateConfig()
 
     global randomised_trials
     randomised_trials = TrialOrder(config["Total Trials"],
@@ -302,7 +305,22 @@ def RunVST():
     global RunningExperiment
     RunningExperiment = "VST"
 
-
+def UpdateConfig():
+    '''
+    Updates the config variable based on the entry boxes
+    '''
+    global config
+    config["Total Trials"] = int(TrialEntry.get())
+    config["Block size"] = int(BlockEntry.get())
+    config["ColPopOutPercent"] = int(ColPopEntry.get())
+    config["ShapePopOutPercent"] = int(ShapePopEntry.get())
+    config["TargetPercent"] = int(TargetEntry.get())
+    config["Possible Stimulus Amounts"] = StimEntry.get()
+    if len(SeedEntry.get()) > 0:
+        config["Seed"] = int(SeedEntry.get())
+    config["Study ID"] = StudyIDEntry.get()
+    config["Participant ID"] = ParticipantIDEntry.get()
+    config["SaveFilePath"] = FileEntry.get()
 
 def GoToConfigCreation():
     '''
@@ -501,15 +519,94 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
     return img
 
 
-InitGUI()
-
 # As for other functions needed:
 
 def SaveResult():
-    return NotImplemented
+    NotImplemented
 
 def OpenConfig():
-    return NotImplemented
+    
+    '''
+    Function called on by the "load config" button, prompts the user to select a config file to open
+    and use for the experiment. It also changes the entry boxes to match the new config
+    '''
+
+    # First open the file
+    newconfig = filedialog.askopenfilename(defaultextension=".json", filetypes =(("json file", "*.json"),))
+    file = open(newconfig)
+    global config
+    config = json.load(file)
+    file.close()
+
+    UpdateEntries()
+
 
 def SaveConfig():
-    return NotImplemented
+    
+    '''
+    Function called on by the "save config" button, prompts the user to select where and with what name
+    to save their config file. Then it uses this to save the config as a .json
+    '''
+
+    # First update the config to make sure the correct values are saved
+    UpdateConfig()
+
+    global config
+    # First do the dialog and collect the filename from it
+    filename = filedialog.asksaveasfilename(defaultextension=".json", filetypes =(("json file", "*.json"),))
+
+    # Check to see if the user filled in anything at all before writing to a json file
+    if len(filename) > 0:
+        with open(filename, 'w') as file:
+            json.dump(config, file)
+
+
+def UpdateEntries():
+
+    '''
+    Function called on to update the entry boxes when a config is loaded in
+    '''
+
+    global TrialEntry
+    TrialEntry.delete(0, 'end')
+    TrialEntry.insert(0, config["Total Trials"])
+
+    global BlockEntry
+    BlockEntry.delete(0, 'end')
+    BlockEntry.insert(0, config["Block size"])
+
+    global ColPopEntry
+    ColPopEntry.delete(0, 'end')
+    ColPopEntry.insert(0, config["ColPopOutPercent"])
+
+    global ShapePopEntry
+    ShapePopEntry.delete(0, 'end')
+    ShapePopEntry.insert(0, config["ShapePopOutPercent"])
+
+    global TargetEntry
+    TargetEntry.delete(0, 'end')
+    TargetEntry.insert(0, config["TargetPercent"])
+
+    global StimEntry
+    StimEntry.delete(0, 'end')
+    StimEntry.insert(0, config["Possible Stimulus Amounts"])
+
+    global SeedEntry
+    SeedEntry.delete(0, 'end')
+    if config["Seed"] != None:
+        SeedEntry.insert(0, config["Seed"])
+
+    global StudyIDEntry
+    StudyIDEntry.delete(0, 'end')
+    StudyIDEntry.insert(0, config["Study ID"])
+
+    global ParticipantIDEntry
+    ParticipantIDEntry.delete(0, 'end')
+    ParticipantIDEntry.insert(0, config["Participant ID"])
+
+    global FileEntry
+    FileEntry.delete(0, 'end')
+    FileEntry.insert(0, config["SaveFilePath"])
+
+
+InitGUI()
