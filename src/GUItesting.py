@@ -6,6 +6,7 @@ import time
 from PIL import Image, ImageTk
 import io
 import json
+from pandas import DataFrame
 
 def InitVars():
 
@@ -18,16 +19,23 @@ def InitVars():
     # This is set to True when the VST starts, and used by the function that handles keypresses
     RunningExperiment = False
 
-    # Most of these are created to ensure python does not get confused by them not existing yet
+    global InstructionScreen
+    InstructionScreen = False
+
+    # These are created to ensure python does not get confused by them not existing yet
     global trial_info
     trial_info = []
 
     global t
     global t2
     global counter
+    global blockcounter
+    global StimulusImage
     t = 0
     t2 = 0
     counter = 0
+    blockcounter = 0
+    StimulusImage = 0
 
     global settings
     settings = ["Total trials:", "Block size:", "Percentage colour pop-out:",
@@ -298,12 +306,23 @@ def RunVST():
     
     # Clear out widgets, honestly maybe even by just destroying the window entirely for good measure
     # Then creating a new one that gets set to fullscreen with instructions and no close button
+    global frame
+    for widget in frame.winfo_children():
+        widget.destroy()
 
-    # Use input() and prompt the user to press enter to continue
-    
+    root.attributes("-fullscreen", True)
+    InstructionLabel = tk.Label(master = frame,
+                                text = "Welcome to the Visual Search Task\n You will be shown images with crosses and circles, in red and black.\n Your task is to determine if there is a red X in the image. \n If there is a red X press \"y\", if there is no red x press \"n\" \n After a number of images, there will be a short break.\n \n Please press enter to start the task",
+                                font = ("Arial", 25))
+    InstructionLabel.pack()
+
+    global InstructionScreen
+    InstructionScreen = True
     # Set a flag that the VST experiment is running
     global RunningExperiment
     RunningExperiment = "VST"
+
+
 
 def UpdateConfig():
     '''
@@ -322,6 +341,7 @@ def UpdateConfig():
     config["Participant ID"] = ParticipantIDEntry.get()
     config["SaveFilePath"] = FileEntry.get()
 
+
 def GoToConfigCreation():
     '''
     Destroys the widgets in the current window and then calls on InitSettings() to create the
@@ -337,8 +357,6 @@ def GoToConfigCreation():
 
 
 
-
-
 def ExperimentPress(event):
     '''
     Function for internal use. This determines how to handle keypresses, whether that's by closing the program (esc)
@@ -346,40 +364,67 @@ def ExperimentPress(event):
     This will be expanded on, but it essentially provides a way to close the program and a way to run the actual experiment.
     Currently prints responses and timings, rather than saving them.
     '''
-    print(event.keysym)
+    #print(event.keysym)
 
     # global counter is used to determine where in the experiment you are, and if it should end
     global counter
+
+    # global blockcounter is made for determining whether a pause between blocks should be created
+    global blockcounter
+
+    # the config is referred to for certain checks
+    global config
+
+    global randomised_trials
+
     # esc should always be possible to use to exit the program
     if event.keysym == "Escape":
         root.destroy()
         exit()
 
     # condition to determine whether to continue
-    elif counter > 20:
+    elif counter >= config["Total Trials"]:
+        
+        # Save data, create exit screen [to do]
+        SaveResult()
         root.destroy()
         exit()
 
     # this is where the experiment actions are performed
     elif RunningExperiment == "VST":
-        if event.keysym == "j" or event.keysym == "n":
+        
+        if counter % config["Block size"] == 0 and counter / config["Block size"] < blockcounter:
+            # Create the pause screen for the block
+            global StimulusImage
+            StimulusImage.destroy()
+
+        if event.keysym == "y" or event.keysym == "n" or event.keysym == "Y" or event.keysym == "N":
             global t2
             global t
 
             # t2 determines how long it's been since the previous stimulus was shown
             t2 = time.time() - t
-            print(t2)
+            
 
             # generate and place image
-            img = GenerateStimulus()
+            condition = randomised_trials[counter]["trial_type"]
+            print(condition)
+            target = randomised_trials[counter]["target"]
+            print(target)
+            stimulusnum = randomised_trials[counter]["stimuli_num"]
+            print(stimulusnum)
+            img = GenerateStimulus(condition = condition, target = target, stimulusnum = int(stimulusnum))
             test = ImageTk.PhotoImage(img)
+
             StimulusImage = tk.Label(image = test)
             StimulusImage.image = test
             StimulusImage.place(x=0, y=0)
 
             # adjust t to start timing for the next response 
             t = time.time()
-            print(t)
+            
+            randomised_trials[counter]["reaction_time"] = t2
+            randomised_trials[counter]["response"] = event.keysym
 
             # increment
             counter = counter + 1
@@ -418,14 +463,15 @@ def TrialOrder(trialnum, ColPopOutPercent, ShapePopOutPercent, TargetPercent, St
         condition = random.choices(["Conjunction", "ColPopOut", "ShapePopOut"],
                                    weights = [ConjPercent, ColPopOutPercent, ShapePopOutPercent])
         stimuli_num = random.choice(StimulusNums)
+        print(stimuli_num)
         target = random.choices([1, 0], weights = [TargetPercent, 100 - TargetPercent])
 
         # The trial information is then put in a dict, and appended to the trials_info list
         current_trial = {
             "trial_num": i,
-            "trial_type": condition,
+            "trial_type": condition[0],
             "stimuli_num": stimuli_num,
-            "target": target,
+            "target": target[0],
             "reaction_time": None,
             "response": None
         }
@@ -468,7 +514,7 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
         targetcoords = coordslist[0]
         coordslist = coordslist[1:]
 
-    plt.figure(figsize = (5,5))
+    plt.figure(figsize = (7,7))
     plt.axis([-5, 55, -5, 55])
 
     # subset coordinates for ColPopOut distractors
@@ -522,7 +568,12 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
 # As for other functions needed:
 
 def SaveResult():
-    NotImplemented
+    global randomised_trials
+    df = DataFrame(randomised_trials)
+
+    global config
+    filename = config["SaveFilePath"] + "/" + "VSTresult" + config["Study ID"] + config["Participant ID"] + ".csv"
+    df.to_csv(filename)
 
 def OpenConfig():
     
@@ -610,3 +661,4 @@ def UpdateEntries():
 
 
 InitGUI()
+
