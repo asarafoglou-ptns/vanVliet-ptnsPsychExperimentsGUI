@@ -7,9 +7,17 @@ from PIL import Image, ImageTk
 import io
 
 def InitVars():
+
+    '''
+    This is called by InitGUI() to set global variables and flags that are needed
+    Takes no inputs and returns no values
+    '''
+
     global RunningExperiment
+    # This is set to True when the VST starts, and used by the function that handles keypresses
     RunningExperiment = False
 
+    # Most of these are created to ensure python does not get confused by them not existing yet
     global trial_info
     trial_info = []
 
@@ -25,6 +33,9 @@ def InitVars():
                 "Percentage shape pop-out:", "Percentage target present:",
                 "Possible stimulus amounts:", "Seed (optional):"]
     
+    # One of the most important global variables that are initialised, the config
+    # This contains the default settings for the task, and this variable is edited when the
+    # settings are changed.
     global config
     config = {
         "Experiment Type": "VST",
@@ -45,6 +56,13 @@ InitVars()
 
 def InitGUI():
 
+    '''
+    Initialises the GUI. It calls on InitVars() to initialise global variables needed, creates a
+    window, binds KeyPress events to the function handling user input, turns on the main loop,
+    and creates the welcome screen.
+    '''
+
+    # Currently commented out due to testing, in the package version this will be called by InitGUI()
     #InitVars()
 
     global root
@@ -67,6 +85,7 @@ def WelcomeScreen():
                            height = "5")
     openingtext.pack()
 
+    # This buttom uses GoToConfigCreation() to lead the user to the settings for the VST experiment
     exp1button = tk.Button(master = frame,
         text = "Visual Search Task",
         width = 25,
@@ -76,6 +95,7 @@ def WelcomeScreen():
     )
     exp1button.pack()
 
+    # This button uses GoToWCSTConfig(), a currently unimplemented function. This means it does nothing
     exp2button = tk.Button(master = frame,
                            text = "Wisconsin Card Sorting Task\n(Not Implemented)",
                            width = 25,
@@ -86,9 +106,19 @@ def WelcomeScreen():
 
 
 def GoToWCSTConfig():
+    # Possibility for future development
     NotImplemented
 
 def InitSettings():
+    '''
+    This is called by GoToConfigCreation(), it populates the window with frames, labels, and entry boxes.
+    The result is a fairly standard screen with labels matching entry boxes to tell you which setting each
+    entry is connected to. The entry boxes are initialised based on the config initialised in InitVars().
+    There are also buttons linked to commands to go back to the welcome screen, continue to the next,
+    save/load configs [not implemented], and choose a directory to save results to.
+    '''
+
+    # Creating frames to make it possible to place each label, entry, and button, where it's wanted
     topframe = tk.Frame(master = frame)
     topframe.pack()
 
@@ -100,7 +130,10 @@ def InitSettings():
     frame2.pack(side = tk.RIGHT)
 
     
-
+    # The following code is all manually writing which labels and entries to create and packing them
+    # There is probably a more efficient way to do this, but I did not manage to find it
+    # The entries are also created as global variables, to make it possible to get user input
+    # out of them in different functions
     StandardText = tk.Label(master = topframe,
                             text = "Selected Experiment: Visual Search Task \n Settings:")
     StandardText.pack()
@@ -148,11 +181,6 @@ def InitSettings():
     if config["Seed"] != None:
         SeedEntry.insert(0, config["Seed"])
 
-    # Also: a section for other experiment settings that are required, those being study ID,
-    # participant ID, and filepath
-
-    #tk.filedialog.askdirectory()
-
     for widget in frame1.winfo_children():
         widget.pack()
 
@@ -195,16 +223,15 @@ def InitSettings():
     FileEntry.insert(0, config['SaveFilePath'])
     FileEntry.pack(side = tk.LEFT)
 
+    # Calls on GetDirectory() to prompt the user to select a directory to save files to
+    # and then adjusts the entry box next to it to match the chosen directory (if one was chosen)
     FileButton = tk.Button(master = StudyEntries, text = "...", command = GetDirectory)
     FileButton.pack(side = tk.RIGHT)
-
-    #FileEntry = filedialog.askdirectory(master = StudyEntries)
-    #FileEntry.pack()
-
 
     bottomframe = tk.Frame(master = frame)
     bottomframe.pack()
 
+    # Returns to the welcome screen
     ReturnButton = tk.Button(master = bottomframe,
                              text = "Back",
                              width = 25,
@@ -213,6 +240,7 @@ def InitSettings():
                              command = WelcomeScreen)
     ReturnButton.pack(side = tk.LEFT)
 
+    # Linked to a command to start the experiment
     StartExperiment = tk.Button(master = bottomframe,
                                 text = "Continue",
                                 width = 25,
@@ -222,6 +250,10 @@ def InitSettings():
     StartExperiment.pack(side = tk.RIGHT)
 
 def GetDirectory():
+    '''
+    Internal function that prompts the user to select where they want results to be saved to
+    adjusts the entry box to match this
+    '''
     global FileEntry
     filepath = filedialog.askdirectory()
     
@@ -239,6 +271,7 @@ def RunVST():
     resize the window (probably to fullscreen)
     '''
 
+    # calls on the global config variable and adjusts it to match the entry boxes
     global config
     config["Total Trials"] = int(TrialEntry.get())
     config["Block size"] = int(BlockEntry.get())
@@ -273,13 +306,8 @@ def RunVST():
 
 def GoToConfigCreation():
     '''
-    This function can be called by any button that is meant to lead the user to the configuration
-    screen (also referred to as Settings) for an experiment. It removes the current active widgets
-    and places those needed for the configuration, with pre-existing values based on a preset
-    or matching the changes already made. It will also contain buttons to continue or go back.
-
-    In its current state, the only available option is the number of trials and the only
-    available button is to start the experiment.
+    Destroys the widgets in the current window and then calls on InitSettings() to create the
+    widgets that make the settings screen instead
     '''
 
     # First clear the current screen
@@ -413,7 +441,7 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
 
     # this generates a space for stimuli to be placed (possibly move this to a different initialiser
     # to see if that improves running time) 
-    coordspace = [(x, y) for x in range(100) for y in range(100)]
+    coordspace = [(x, y) for x in range(50) for y in range(50)]
     # from this, take a random sample (this does not repeat, so overlap does not happen)
     coordslist = random.sample(coordspace, k = stimulusnum)
 
@@ -423,7 +451,7 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
         coordslist = coordslist[1:]
 
     plt.figure(figsize = (5,5))
-    plt.axis([-5, 105, -5, 105])
+    plt.axis([-5, 55, -5, 55])
 
     # subset coordinates for ColPopOut distractors
     if condition == "ColPopOut":
