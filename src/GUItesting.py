@@ -53,7 +53,7 @@ def InitVars():
         "ColPopOutPercent": 10,
         "ShapePopOutPercent": 10,
         "TargetPercent": 50,
-        "Possible Stimulus Amounts": "[4, 10, 20]",
+        "Possible Stimulus Amounts": "4, 10, 20",
         "Seed": None,
         "Study ID": "test_run",
         "Participant ID": "001",
@@ -296,12 +296,18 @@ def RunVST():
     # Updates the config to match the entry boxes
     UpdateConfig()
 
+    stimulusstrs = config["Possible Stimulus Amounts"]
+    stimulusstrs = stimulusstrs.split(", ")
+    stimulusnums = []
+    for i in stimulusstrs:
+        stimulusnums.append(int(i))
+
     global randomised_trials
     randomised_trials = TrialOrder(config["Total Trials"],
                                    config["ColPopOutPercent"],
                                    config["ShapePopOutPercent"],
                                    config["TargetPercent"],
-                                   config["Possible Stimulus Amounts"],
+                                   stimulusnums,
                                    config["Seed"])
     
     # Clear out widgets, honestly maybe even by just destroying the window entirely for good measure
@@ -398,7 +404,7 @@ def ExperimentPress(event):
             global StimulusImage
             StimulusImage.destroy()
 
-        if event.keysym == "y" or event.keysym == "n" or event.keysym == "Y" or event.keysym == "N":
+        elif event.keysym == "y" or event.keysym == "n" or event.keysym == "Y" or event.keysym == "N":
             global t2
             global t
 
@@ -408,12 +414,10 @@ def ExperimentPress(event):
 
             # generate and place image
             condition = randomised_trials[counter]["trial_type"]
-            print(condition)
             target = randomised_trials[counter]["target"]
-            print(target)
             stimulusnum = randomised_trials[counter]["stimuli_num"]
-            print(stimulusnum)
-            img = GenerateStimulus(condition = condition, target = target, stimulusnum = int(stimulusnum))
+            
+            img = GenerateStimulus(condition = condition, target = target, stimulusnum = stimulusnum)
             test = ImageTk.PhotoImage(img)
 
             StimulusImage = tk.Label(image = test)
@@ -463,7 +467,6 @@ def TrialOrder(trialnum, ColPopOutPercent, ShapePopOutPercent, TargetPercent, St
         condition = random.choices(["Conjunction", "ColPopOut", "ShapePopOut"],
                                    weights = [ConjPercent, ColPopOutPercent, ShapePopOutPercent])
         stimuli_num = random.choice(StimulusNums)
-        print(stimuli_num)
         target = random.choices([1, 0], weights = [TargetPercent, 100 - TargetPercent])
 
         # The trial information is then put in a dict, and appended to the trials_info list
@@ -491,7 +494,7 @@ def TrialOrder(trialnum, ColPopOutPercent, ShapePopOutPercent, TargetPercent, St
 # Note: stimulusnum has to be a minimum of 4, implement checks for this!
 # Also note: when implementing this in the GUI, it might not be with matplotlib
 # Or it will be converting matplotlib into an image or something else along those lines
-def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
+def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 10):
     '''
     Takes a condition, whether a target is present, and the stimulusnum to generate an image of randomly placed non-overlapping
     x's and o's.
