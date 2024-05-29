@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import time
 from PIL import Image, ImageTk
 import io
+import json
+from pandas import DataFrame
 
 def InitVars():
 
@@ -17,16 +19,23 @@ def InitVars():
     # This is set to True when the VST starts, and used by the function that handles keypresses
     RunningExperiment = False
 
-    # Most of these are created to ensure python does not get confused by them not existing yet
+    global InstructionScreen
+    InstructionScreen = False
+
+    # These are created to ensure python does not get confused by them not existing yet
     global trial_info
     trial_info = []
 
     global t
     global t2
     global counter
+    global blockcounter
+    global StimulusImage
     t = 0
     t2 = 0
     counter = 0
+    blockcounter = 0
+    StimulusImage = 0
 
     global settings
     settings = ["Total trials:", "Block size:", "Percentage colour pop-out:",
@@ -44,14 +53,14 @@ def InitVars():
         "ColPopOutPercent": 10,
         "ShapePopOutPercent": 10,
         "TargetPercent": 50,
-        "Possible Stimulus Amounts": "[4, 10, 20]",
+        "Possible Stimulus Amounts": "4, 10, 20",
         "Seed": None,
         "Study ID": "test_run",
         "Participant ID": "001",
         "SaveFilePath": 'C:/Documents/Research/VST_test'
     }
 
-InitVars()
+#InitVars()
 
 
 def InitGUI():
@@ -63,7 +72,7 @@ def InitGUI():
     '''
 
     # Currently commented out due to testing, in the package version this will be called by InitGUI()
-    #InitVars()
+    InitVars()
 
     global root
     root = tk.Tk()
@@ -240,6 +249,19 @@ def InitSettings():
                              command = WelcomeScreen)
     ReturnButton.pack(side = tk.LEFT)
 
+    # Save the config
+    SaveConfigButton = tk.Button(master = bottomframe,
+                                 text = "Save config",
+                                 bg = "white",
+                                 command = SaveConfig)
+    SaveConfigButton.pack(side = tk.RIGHT)
+
+    OpenConfigButton = tk.Button(master = bottomframe,
+                                 text = "Open config",
+                                 bg = "white",
+                                 command = OpenConfig)
+    OpenConfigButton.pack(side = tk.RIGHT)
+
     # Linked to a command to start the experiment
     StartExperiment = tk.Button(master = bottomframe,
                                 text = "Continue",
@@ -271,7 +293,47 @@ def RunVST():
     resize the window (probably to fullscreen)
     '''
 
-    # calls on the global config variable and adjusts it to match the entry boxes
+    # Updates the config to match the entry boxes
+    UpdateConfig()
+
+    stimulusstrs = config["Possible Stimulus Amounts"]
+    stimulusstrs = stimulusstrs.split(", ")
+    stimulusnums = []
+    for i in stimulusstrs:
+        stimulusnums.append(int(i))
+
+    global randomised_trials
+    randomised_trials = TrialOrder(config["Total Trials"],
+                                   config["ColPopOutPercent"],
+                                   config["ShapePopOutPercent"],
+                                   config["TargetPercent"],
+                                   stimulusnums,
+                                   config["Seed"])
+    
+    # Clear out widgets, honestly maybe even by just destroying the window entirely for good measure
+    # Then creating a new one that gets set to fullscreen with instructions and no close button
+    global frame
+    for widget in frame.winfo_children():
+        widget.destroy()
+
+    root.attributes("-fullscreen", True)
+    InstructionLabel = tk.Label(master = frame,
+                                text = "Welcome to the Visual Search Task\n You will be shown images with crosses and circles, in red and black.\n Your task is to determine if there is a red X in the image. \n If there is a red X press \"y\", if there is no red x press \"n\" \n After a number of images, there will be a short break.\n \n Please press enter to start the task",
+                                font = ("Arial", 25))
+    InstructionLabel.pack()
+
+    global InstructionScreen
+    InstructionScreen = True
+    # Set a flag that the VST experiment is running
+    global RunningExperiment
+    RunningExperiment = "VST"
+
+
+
+def UpdateConfig():
+    '''
+    Updates the config variable based on the entry boxes
+    '''
     global config
     config["Total Trials"] = int(TrialEntry.get())
     config["Block size"] = int(BlockEntry.get())
@@ -284,24 +346,6 @@ def RunVST():
     config["Study ID"] = StudyIDEntry.get()
     config["Participant ID"] = ParticipantIDEntry.get()
     config["SaveFilePath"] = FileEntry.get()
-
-    global randomised_trials
-    randomised_trials = TrialOrder(config["Total Trials"],
-                                   config["ColPopOutPercent"],
-                                   config["ShapePopOutPercent"],
-                                   config["TargetPercent"],
-                                   config["Possible Stimulus Amounts"],
-                                   config["Seed"])
-    
-    # Clear out widgets, honestly maybe even by just destroying the window entirely for good measure
-    # Then creating a new one that gets set to fullscreen with instructions and no close button
-
-    # Use input() and prompt the user to press enter to continue
-    
-    # Set a flag that the VST experiment is running
-    global RunningExperiment
-    RunningExperiment = "VST"
-
 
 
 def GoToConfigCreation():
@@ -319,8 +363,6 @@ def GoToConfigCreation():
 
 
 
-
-
 def ExperimentPress(event):
     '''
     Function for internal use. This determines how to handle keypresses, whether that's by closing the program (esc)
@@ -328,40 +370,65 @@ def ExperimentPress(event):
     This will be expanded on, but it essentially provides a way to close the program and a way to run the actual experiment.
     Currently prints responses and timings, rather than saving them.
     '''
-    print(event.keysym)
+    #print(event.keysym)
 
     # global counter is used to determine where in the experiment you are, and if it should end
     global counter
+
+    # global blockcounter is made for determining whether a pause between blocks should be created
+    global blockcounter
+
+    # the config is referred to for certain checks
+    global config
+
+    global randomised_trials
+
     # esc should always be possible to use to exit the program
     if event.keysym == "Escape":
         root.destroy()
         exit()
 
     # condition to determine whether to continue
-    elif counter > 20:
+    elif counter >= config["Total Trials"]:
+        
+        # Save data, create exit screen [to do]
+        SaveResult()
         root.destroy()
         exit()
 
     # this is where the experiment actions are performed
     elif RunningExperiment == "VST":
-        if event.keysym == "j" or event.keysym == "n":
+        
+        if counter % config["Block size"] == 0 and counter / config["Block size"] < blockcounter:
+            # Create the pause screen for the block
+            global StimulusImage
+            StimulusImage.destroy()
+
+        elif event.keysym == "y" or event.keysym == "n" or event.keysym == "Y" or event.keysym == "N":
             global t2
             global t
 
             # t2 determines how long it's been since the previous stimulus was shown
             t2 = time.time() - t
-            print(t2)
+            
 
             # generate and place image
-            img = GenerateStimulus()
+            condition = randomised_trials[counter]["trial_type"]
+            target = randomised_trials[counter]["target"]
+            stimulusnum = randomised_trials[counter]["stimuli_num"]
+            
+            img = GenerateStimulus(condition = condition, target = target, stimulusnum = stimulusnum)
             test = ImageTk.PhotoImage(img)
+
             StimulusImage = tk.Label(image = test)
             StimulusImage.image = test
             StimulusImage.place(x=0, y=0)
 
             # adjust t to start timing for the next response 
             t = time.time()
-            print(t)
+            
+            randomised_trials[counter]["reaction_time"] = t2
+            randomised_trials[counter]["response"] = event.keysym
 
             # increment
             counter = counter + 1
@@ -405,9 +472,9 @@ def TrialOrder(trialnum, ColPopOutPercent, ShapePopOutPercent, TargetPercent, St
         # The trial information is then put in a dict, and appended to the trials_info list
         current_trial = {
             "trial_num": i,
-            "trial_type": condition,
+            "trial_type": condition[0],
             "stimuli_num": stimuli_num,
-            "target": target,
+            "target": target[0],
             "reaction_time": None,
             "response": None
         }
@@ -427,7 +494,7 @@ def TrialOrder(trialnum, ColPopOutPercent, ShapePopOutPercent, TargetPercent, St
 # Note: stimulusnum has to be a minimum of 4, implement checks for this!
 # Also note: when implementing this in the GUI, it might not be with matplotlib
 # Or it will be converting matplotlib into an image or something else along those lines
-def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
+def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 10):
     '''
     Takes a condition, whether a target is present, and the stimulusnum to generate an image of randomly placed non-overlapping
     x's and o's.
@@ -450,7 +517,7 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
         targetcoords = coordslist[0]
         coordslist = coordslist[1:]
 
-    plt.figure(figsize = (5,5))
+    plt.figure(figsize = (7,7))
     plt.axis([-5, 55, -5, 55])
 
     # subset coordinates for ColPopOut distractors
@@ -501,15 +568,100 @@ def GenerateStimulus(condition = "ColPopOut", target = 1, stimulusnum = 20):
     return img
 
 
-InitGUI()
-
 # As for other functions needed:
 
 def SaveResult():
-    return NotImplemented
+    global randomised_trials
+    df = DataFrame(randomised_trials)
+
+    global config
+    filename = config["SaveFilePath"] + "/" + "VSTresult" + config["Study ID"] + config["Participant ID"] + ".csv"
+    df.to_csv(filename)
 
 def OpenConfig():
-    return NotImplemented
+    
+    '''
+    Function called on by the "load config" button, prompts the user to select a config file to open
+    and use for the experiment. It also changes the entry boxes to match the new config
+    '''
+
+    # First open the file
+    newconfig = filedialog.askopenfilename(defaultextension=".json", filetypes =(("json file", "*.json"),))
+    file = open(newconfig)
+    global config
+    config = json.load(file)
+    file.close()
+
+    UpdateEntries()
+
 
 def SaveConfig():
-    return NotImplemented
+    
+    '''
+    Function called on by the "save config" button, prompts the user to select where and with what name
+    to save their config file. Then it uses this to save the config as a .json
+    '''
+
+    # First update the config to make sure the correct values are saved
+    UpdateConfig()
+
+    global config
+    # First do the dialog and collect the filename from it
+    filename = filedialog.asksaveasfilename(defaultextension=".json", filetypes =(("json file", "*.json"),))
+
+    # Check to see if the user filled in anything at all before writing to a json file
+    if len(filename) > 0:
+        with open(filename, 'w') as file:
+            json.dump(config, file)
+
+
+def UpdateEntries():
+
+    '''
+    Function called on to update the entry boxes when a config is loaded in
+    '''
+
+    global TrialEntry
+    TrialEntry.delete(0, 'end')
+    TrialEntry.insert(0, config["Total Trials"])
+
+    global BlockEntry
+    BlockEntry.delete(0, 'end')
+    BlockEntry.insert(0, config["Block size"])
+
+    global ColPopEntry
+    ColPopEntry.delete(0, 'end')
+    ColPopEntry.insert(0, config["ColPopOutPercent"])
+
+    global ShapePopEntry
+    ShapePopEntry.delete(0, 'end')
+    ShapePopEntry.insert(0, config["ShapePopOutPercent"])
+
+    global TargetEntry
+    TargetEntry.delete(0, 'end')
+    TargetEntry.insert(0, config["TargetPercent"])
+
+    global StimEntry
+    StimEntry.delete(0, 'end')
+    StimEntry.insert(0, config["Possible Stimulus Amounts"])
+
+    global SeedEntry
+    SeedEntry.delete(0, 'end')
+    if config["Seed"] != None:
+        SeedEntry.insert(0, config["Seed"])
+
+    global StudyIDEntry
+    StudyIDEntry.delete(0, 'end')
+    StudyIDEntry.insert(0, config["Study ID"])
+
+    global ParticipantIDEntry
+    ParticipantIDEntry.delete(0, 'end')
+    ParticipantIDEntry.insert(0, config["Participant ID"])
+
+    global FileEntry
+    FileEntry.delete(0, 'end')
+    FileEntry.insert(0, config["SaveFilePath"])
+
+
+#InitGUI()
+
