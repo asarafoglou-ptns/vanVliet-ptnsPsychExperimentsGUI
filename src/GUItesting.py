@@ -60,7 +60,7 @@ def InitVars():
         "SaveFilePath": 'C:/Documents/Research/VST_test'
     }
 
-InitVars()
+#InitVars()
 
 
 def InitGUI():
@@ -72,7 +72,7 @@ def InitGUI():
     '''
 
     # Currently commented out due to testing, in the package version this will be called by InitGUI()
-    #InitVars()
+    InitVars()
 
     global root
     root = tk.Tk()
@@ -663,5 +663,5 @@ def UpdateEntries():
     FileEntry.insert(0, config["SaveFilePath"])
 
 
-InitGUI()
+#InitGUI()
 
