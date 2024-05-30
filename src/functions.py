@@ -25,6 +25,9 @@ def InitVars():
     global InstructionScreen
     InstructionScreen = False
 
+    global BlockScreen
+    BlockScreen = False
+
     # These are created to ensure python does not get confused by them not existing yet
     global trial_info
     trial_info = []
@@ -324,6 +327,14 @@ def SettingsCheck():
                                 command = RunVST)
     StartExperiment.pack(side = tk.RIGHT)
 
+def ShowBlockScreen():
+    global StimulusImage
+    StimulusImage.destroy()
+
+    InstructionLabel = tk.Label(master = frame,
+                                text = "This is a small break between blocks \n Press Enter when you are ready to continue",
+                                font = ("Arial", 25))
+    InstructionLabel.pack()
 
 
 # Button functions
@@ -470,6 +481,12 @@ def ExperimentPress(event):
     global config
 
     global randomised_trials
+    global InstructionScreen
+    global StimulusImage
+    global t
+
+    global BlockScreen
+
 
     # esc should always be possible to use to exit the program
     if event.keysym == "Escape":
@@ -486,19 +503,58 @@ def ExperimentPress(event):
 
     # this is where the experiment actions are performed
     elif RunningExperiment == "VST":
-        
-        if counter % config["Block size"] == 0 and counter / config["Block size"] < blockcounter:
+        if InstructionScreen == True:
+            if event.keysym == "Return":
+                for widget in frame.winfo_children():
+                    widget.destroy()
+
+                InstructionScreen = False
+
+                condition = randomised_trials[counter]["trial_type"]
+                target = randomised_trials[counter]["target"]
+                stimulusnum = randomised_trials[counter]["stimuli_num"]
+                
+                img = GenerateStimulus(condition = condition, target = target, stimulusnum = stimulusnum)
+                test = ImageTk.PhotoImage(img)
+
+                StimulusImage = tk.Label(image = test)
+                StimulusImage.image = test
+                StimulusImage.place(x=root.winfo_width() // 2, y=root.winfo_height() // 2, anchor = "center")
+
+                t = time.time()
+        elif BlockScreen == True:
+            if event.keysym == "Return":
+                for widget in frame.winfo_children():
+                    widget.destroy()
+                BlockScreen = False
+
+                condition = randomised_trials[counter]["trial_type"]
+                target = randomised_trials[counter]["target"]
+                stimulusnum = randomised_trials[counter]["stimuli_num"]
+                
+                img = GenerateStimulus(condition = condition, target = target, stimulusnum = stimulusnum)
+                test = ImageTk.PhotoImage(img)
+
+                StimulusImage = tk.Label(image = test)
+                StimulusImage.image = test
+                StimulusImage.place(x=root.winfo_width() // 2, y=root.winfo_height() // 2, anchor = "center")
+
+                t = time.time()
+
+        elif counter % config["Block size"] == 0 and counter / config["Block size"] > blockcounter:
             # Create the pause screen for the block
-            global StimulusImage
             StimulusImage.destroy()
+            BlockScreen = True
+            blockcounter = blockcounter + 1
+            ShowBlockScreen()
 
         elif event.keysym == "y" or event.keysym == "n" or event.keysym == "Y" or event.keysym == "N":
             global t2
-            global t
 
             # t2 determines how long it's been since the previous stimulus was shown
             t2 = time.time() - t
             
+            StimulusImage.destroy()
 
             # generate and place image
             condition = randomised_trials[counter]["trial_type"]
@@ -510,11 +566,12 @@ def ExperimentPress(event):
 
             StimulusImage = tk.Label(image = test)
             StimulusImage.image = test
-            StimulusImage.place(x=0, y=0)
+            StimulusImage.place(x=root.winfo_width() // 2, y=root.winfo_height() // 2, anchor = "center")
 
             # adjust t to start timing for the next response 
             t = time.time()
             
+            # Save response
             randomised_trials[counter]["reaction_time"] = t2
             randomised_trials[counter]["response"] = event.keysym
 
@@ -650,7 +707,7 @@ def SaveResult():
 
     global config
     filename = config["SaveFilePath"] + "/" + "VSTresult" + config["Study ID"] + config["Participant ID"] + ".csv"
-    df.to_csv(filename)
+    df.to_csv(filename, sep = ";")
 
 
 # General functions
