@@ -1,0 +1,26 @@
+[build system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vanVliet_ptnsPsychExperimentsGUI"
+version = "0.0.1"
+authors = [
+    {name = "I.v.Vliet", email = "ilonka.vanvliet@student.uva.nl"}
+]
+description = "A package for running psychological experiments in a GUI"
+readme = README.md
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "matplotlib",
+    "PIL",
+    "pandas",
+]
+[project.urls]
+Homepage = "https://github.com/asarafoglou-ptns/vanVliet-ptnsPsychExperimentsGUI"
+Issues = "https://github.com/asarafoglou-ptns/vanVliet-ptnsPsychExperimentsGUI/issues"
