@@ -63,7 +63,7 @@ def InitVars():
         "SaveFilePath": 'C:/Documents/Research/VST_test'
     }
 
-#InitVars()
+InitVars()
 
 
 def InitGUI():
@@ -75,7 +75,7 @@ def InitGUI():
     '''
 
     # Currently commented out due to testing, in the package version this will be called by InitGUI()
-    InitVars()
+    #InitVars()
 
     global root
     root = tk.Tk()
@@ -238,6 +238,22 @@ def InitSettings():
     FileButton = tk.Button(master = StudyEntries, text = "...", command = GetDirectory)
     FileButton.pack(side = tk.RIGHT)
 
+    configframe = tk.Frame(master = frame)
+    configframe.pack()
+
+    # Save the config
+    SaveConfigButton = tk.Button(master = configframe,
+                                 text = "Save config",
+                                 bg = "white",
+                                 command = SaveConfig)
+    SaveConfigButton.pack(side = tk.RIGHT)
+
+    OpenConfigButton = tk.Button(master = configframe,
+                                 text = "Open config",
+                                 bg = "white",
+                                 command = OpenConfig)
+    OpenConfigButton.pack(side = tk.RIGHT)
+
     bottomframe = tk.Frame(master = frame)
     bottomframe.pack()
 
@@ -250,22 +266,58 @@ def InitSettings():
                              command = WelcomeScreen)
     ReturnButton.pack(side = tk.LEFT)
 
-    # Save the config
-    SaveConfigButton = tk.Button(master = bottomframe,
-                                 text = "Save config",
-                                 bg = "white",
-                                 command = SaveConfig)
-    SaveConfigButton.pack(side = tk.RIGHT)
-
-    OpenConfigButton = tk.Button(master = bottomframe,
-                                 text = "Open config",
-                                 bg = "white",
-                                 command = OpenConfig)
-    OpenConfigButton.pack(side = tk.RIGHT)
-
-    # Linked to a command to start the experiment
+    # Linked to a command to go to a screen where the user can check their settings
     StartExperiment = tk.Button(master = bottomframe,
                                 text = "Continue",
+                                width = 25,
+                                height = 5,
+                                bg = "white",
+                                command = GoToSettingsCheck)
+    StartExperiment.pack(side = tk.RIGHT)
+
+def SettingsCheck():
+
+    '''
+    Internal GUI function that creates a screen showing the user their current settings before they continue to the experiment
+    '''
+
+    for widget in frame.winfo_children():
+        widget.destroy()
+
+    global config
+
+    exptype = "Experiment Type: " + config["Experiment Type"]
+    trialnum = "Total Trials: " + str(config["Total Trials"])
+    blocksize = "Block Size: " + str(config["Block size"])
+    ColPercent = "Percentage Colour Pop-Out: " + str(config["ColPopOutPercent"])
+    ShapePercent = "Percentage Shape Pop-Out: " + str(config["ShapePopOutPercent"])
+    TargetPercent = "Percentage Target: " + str(config["TargetPercent"])
+    StimAmounts = "Possible Stimulus Amounts: " + config["Possible Stimulus Amounts"]
+    if config["Seed"] != None:
+        Seed = "Seed: " + str(config["Seed"])
+    else:
+        Seed = "Seed: None"
+    StudyID = "Study ID: " + config["Study ID"]
+    ParticipantID = "Participant ID: " + config["Participant ID"]
+    SaveFilePath = "Location to save results to: " + config["SaveFilePath"]
+
+    SettingsText = exptype + "\n" + trialnum + "\n" + blocksize + "\n" + ColPercent + "\n" + ShapePercent + "\n" + TargetPercent + "\n" + StimAmounts + "\n" + Seed + "\n" + StudyID + "\n" + ParticipantID + "\n" + SaveFilePath
+
+    SettingsLabel = tk.Label(master = frame, text = SettingsText)
+    SettingsLabel.pack()
+
+    buttonframe = tk.Frame(master = frame)
+    buttonframe.pack()
+    ReturnConfig = tk.Button(master = buttonframe,
+                             text = "Change Settings",
+                             width = 25,
+                             height = 5,
+                             bg = "white",
+                             command = GoToConfigCreation)
+    ReturnConfig.pack(side = tk.LEFT)
+
+    StartExperiment = tk.Button(master = buttonframe,
+                                text = "Start Experiment",
                                 width = 25,
                                 height = 5,
                                 bg = "white",
@@ -343,7 +395,17 @@ def SaveConfig():
             json.dump(config, file)
 
 
+def GoToSettingsCheck():
 
+    '''
+    Function attached to a button, which triggers required updates before calling on a function to create the
+    SettingsCheck screen (where a user can check if their settings are what they wanted, before continuing)
+    '''
+
+    # First clear the current screen
+    UpdateConfig()
+
+    SettingsCheck()
 
 # Experiment functions
 
@@ -355,9 +417,6 @@ def RunVST():
     The current plan for it is to make it also provide instructions to the participant and
     resize the window (probably to fullscreen)
     '''
-
-    # Updates the config to match the entry boxes
-    UpdateConfig()
 
     stimulusstrs = config["Possible Stimulus Amounts"]
     stimulusstrs = stimulusstrs.split(", ")
@@ -660,3 +719,6 @@ def UpdateEntries():
     global FileEntry
     FileEntry.delete(0, 'end')
     FileEntry.insert(0, config["SaveFilePath"])
+
+
+InitGUI()
