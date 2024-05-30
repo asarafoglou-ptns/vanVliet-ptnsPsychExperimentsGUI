@@ -28,6 +28,12 @@ def InitVars():
     global BlockScreen
     BlockScreen = False
 
+    global FinishedExperiment
+    FinishedExperiment = False
+
+    global FullScreen
+    FullScreen = False
+
     # These are created to ensure python does not get confused by them not existing yet
     global trial_info
     trial_info = []
@@ -97,6 +103,7 @@ def InitGUI():
 def WelcomeScreen():
     for widget in frame.winfo_children():
         widget.destroy()
+
     openingtext = tk.Label(master = frame,
                            text = "Welcome to the Psychology Experiment GUI \n Please start by selecting an experiment from the following",
                            width = "50",
@@ -336,6 +343,28 @@ def ShowBlockScreen():
                                 font = ("Arial", 25))
     InstructionLabel.pack()
 
+def EndExperiment():
+    InstructionLabel = tk.Label(master = frame,
+                                text = "This is the end of the experiment \n Thank you for your participation \n Press Enter to exit",
+                                font = ("Arial", 25))
+    InstructionLabel.pack()
+
+def ResultsScreen():
+    for widget in frame.winfo_children():
+        widget.destroy()
+
+    SavedText = tk.Label(master = frame,
+                         text = "Your results have been saved!")
+    SavedText.pack()
+
+    StartScreenButton = tk.Button(master = frame,
+                                  text = "Return to start",
+                                  width = 25,
+                                  height = 5,
+                                  bg = "white",
+                                  command = WelcomeScreen)
+    StartScreenButton.pack()
+
 
 # Button functions
 
@@ -450,6 +479,8 @@ def RunVST():
         widget.destroy()
 
     root.attributes("-fullscreen", True)
+    global FullScreen
+    FullScreen = True
     InstructionLabel = tk.Label(master = frame,
                                 text = "Welcome to the Visual Search Task\n You will be shown images with crosses and circles, in red and black.\n Your task is to determine if there is a red X in the image. \n If there is a red X press \"y\", if there is no red x press \"n\" \n After a number of images, there will be a short break.\n \n Please press enter to start the task",
                                 font = ("Arial", 25))
@@ -460,6 +491,9 @@ def RunVST():
     # Set a flag that the VST experiment is running
     global RunningExperiment
     RunningExperiment = "VST"
+
+    global FinishedExperiment
+    FinishedExperiment = False
 
 
 def ExperimentPress(event):
@@ -484,20 +518,15 @@ def ExperimentPress(event):
     global InstructionScreen
     global StimulusImage
     global t
+    global RunningExperiment
+    global FinishedExperiment
 
     global BlockScreen
+    global FullScreen
 
 
     # esc should always be possible to use to exit the program
-    if event.keysym == "Escape":
-        root.destroy()
-        exit()
-
-    # condition to determine whether to continue
-    elif counter >= config["Total Trials"]:
-        
-        # Save data, create exit screen [to do]
-        SaveResult()
+    if event.keysym == "Escape" and FullScreen == True:
         root.destroy()
         exit()
 
@@ -553,30 +582,54 @@ def ExperimentPress(event):
 
             # t2 determines how long it's been since the previous stimulus was shown
             t2 = time.time() - t
-            
-            StimulusImage.destroy()
 
-            # generate and place image
-            condition = randomised_trials[counter]["trial_type"]
-            target = randomised_trials[counter]["target"]
-            stimulusnum = randomised_trials[counter]["stimuli_num"]
-            
-            img = GenerateStimulus(condition = condition, target = target, stimulusnum = stimulusnum)
-            test = ImageTk.PhotoImage(img)
-
-            StimulusImage = tk.Label(image = test)
-            StimulusImage.image = test
-            StimulusImage.place(x=root.winfo_width() // 2, y=root.winfo_height() // 2, anchor = "center")
-
-            # adjust t to start timing for the next response 
-            t = time.time()
-            
             # Save response
             randomised_trials[counter]["reaction_time"] = t2
             randomised_trials[counter]["response"] = event.keysym
 
             # increment
             counter = counter + 1
+
+            StimulusImage.destroy()
+            
+            if counter >= config["Total Trials"]:
+        
+                # Save data, create exit screen [to do]
+                SaveResult()
+
+                RunningExperiment = False
+                FinishedExperiment = True
+                EndExperiment()
+
+            elif counter % config["Block size"] == 0 and counter / config["Block size"] > blockcounter:
+                # Create the pause screen for the block
+                BlockScreen = True
+                blockcounter = blockcounter + 1
+                ShowBlockScreen()
+
+            else:
+
+                # generate and place image
+                condition = randomised_trials[counter]["trial_type"]
+                target = randomised_trials[counter]["target"]
+                stimulusnum = randomised_trials[counter]["stimuli_num"]
+                
+                img = GenerateStimulus(condition = condition, target = target, stimulusnum = stimulusnum)
+                test = ImageTk.PhotoImage(img)
+
+                StimulusImage = tk.Label(image = test)
+                StimulusImage.image = test
+                StimulusImage.place(x=root.winfo_width() // 2, y=root.winfo_height() // 2, anchor = "center")
+
+                # adjust t to start timing for the next response 
+                t = time.time()
+    elif FinishedExperiment == True and event.keysym == "Return":
+        root.attributes("-fullscreen", False)
+        FullScreen = False
+        ResultsScreen()
+
+
+            
 
 
 
