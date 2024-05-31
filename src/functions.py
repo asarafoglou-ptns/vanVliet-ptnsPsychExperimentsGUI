@@ -832,4 +832,4 @@ def UpdateEntries():
     FileEntry.insert(0, config["SaveFilePath"])
 
 
-InitGUI()
+#InitGUI()
