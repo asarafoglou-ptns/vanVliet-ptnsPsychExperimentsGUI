@@ -72,7 +72,6 @@ def InitVars():
         "SaveFilePath": 'C:/Documents/Research/VST_test'
     }
 
-#InitVars()
 
 
 def InitGUI():
@@ -830,6 +829,3 @@ def UpdateEntries():
     global FileEntry
     FileEntry.delete(0, 'end')
     FileEntry.insert(0, config["SaveFilePath"])
-
-
-#InitGUI()
