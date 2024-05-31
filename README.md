@@ -106,6 +106,8 @@ The program can now be closed or you can click the button to go back to the expe
 
 ![afbeelding](https://github.com/asarafoglou-ptns/vanVliet-ptnsPsychExperimentsGUI/assets/157616983/6026a0d3-9b57-4268-85cb-b318ee2e1856)
 
-The result of this is a .csv file, which has the following structure:
+The result of this is a .csv file with ``;`` as a separator, which has the following structure:
 
-[add image after fixing bug]
+![afbeelding](https://github.com/asarafoglou-ptns/vanVliet-ptnsPsychExperimentsGUI/assets/157616983/34fabbc1-b8d0-4e53-8aed-0c8efaef7ed3)
+
+(Note: if you open it in excel and the reaction time does not seem to work, check if excel recognises . as a decimal sign.)
