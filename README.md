@@ -81,12 +81,12 @@ At this point the participant should be shown the screen and offered the keyboar
 
 Above you can see an example of a conjunction task, with the target absent. This has distractors both for colour (red) and shape (x).
 
-For a shape pop-out trial, only colour distractors are present:
+For a shape pop-out trial, only colour distractors are present (example with target present):
 
 ![afbeelding](https://github.com/asarafoglou-ptns/vanVliet-ptnsPsychExperimentsGUI/assets/157616983/08319bd6-a40d-4fbc-9cc2-2517da8318e7)
 
 
-For a colour pop-out trial, only shape distractors are present:
+For a colour pop-out trial, only shape distractors are present (example with target present):
 
 ![afbeelding](https://github.com/asarafoglou-ptns/vanVliet-ptnsPsychExperimentsGUI/assets/157616983/d4094e7c-90b0-4b0a-9001-8be875b12b08)
 
