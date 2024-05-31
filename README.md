@@ -36,6 +36,9 @@ Package dependencies: pillow, matplotlib, and pandas.
 
 ## Flowchart
 
+![programmingnextstepdiagram drawio(1)](https://github.com/asarafoglou-ptns/vanVliet-ptnsPsychExperimentsGUI/assets/157616983/e092ddd5-e5ce-4cb8-8d8f-3709e8022558)
+
+
 ## Example application and how to use the UI
 After installing the package, the following lines need to be used in a Python terminal or script:
 ``import PsychExperimentsGUI``
@@ -110,4 +113,10 @@ The result of this is a .csv file with ``;`` as a separator, which has the follo
 
 ![afbeelding](https://github.com/asarafoglou-ptns/vanVliet-ptnsPsychExperimentsGUI/assets/157616983/34fabbc1-b8d0-4e53-8aed-0c8efaef7ed3)
 
-(Note: if you open it in excel and the reaction time does not seem to work, check if excel recognises . as a decimal sign.)
+(Note: if you open it in excel and the reaction time does not seem to work, check if excel recognises ``.`` as a decimal sign.)
+
+You can now use this for data analysis.
+
+## Further information
+
+Contact me here on GitHub if there are any bugs, issues, or features you want to request. You may also contact me with questions about how the code works.
