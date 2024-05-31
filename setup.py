@@ -1,7 +1,7 @@
 import setuptools
 
 setuptools.setup(
-    name = "vanVliet_ptnsPsychExperimentsGUI",
+    name = "PsychExperimentsGUI",
     version = "0.0.1",
     author = "I.v.Vliet",
     author_email = "ilonka.vanvliet@student.uva.nl",
