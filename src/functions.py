@@ -72,7 +72,7 @@ def InitVars():
         "SaveFilePath": 'C:/Documents/Research/VST_test'
     }
 
-InitVars()
+#InitVars()
 
 
 def InitGUI():
@@ -84,13 +84,13 @@ def InitGUI():
     '''
 
     # Currently commented out due to testing, in the package version this will be called by InitGUI()
-    #InitVars()
+    InitVars()
 
     global root
     root = tk.Tk()
     global frame
     frame = tk.Frame()
-    frame.pack()
+    frame.pack(expand = True)
     
     WelcomeScreen()
 
@@ -481,6 +481,7 @@ def RunVST():
     root.attributes("-fullscreen", True)
     global FullScreen
     FullScreen = True
+
     InstructionLabel = tk.Label(master = frame,
                                 text = "Welcome to the Visual Search Task\n You will be shown images with crosses and circles, in red and black.\n Your task is to determine if there is a red X in the image. \n If there is a red X press \"y\", if there is no red x press \"n\" \n After a number of images, there will be a short break.\n \n Please press enter to start the task",
                                 font = ("Arial", 25))
